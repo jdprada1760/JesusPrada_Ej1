@@ -22,7 +22,7 @@ int L = 5, l = 2, d = 1, V0 = 100, m = 128, N, s;
 int rank, world_size;
 
 int tr(int i, int j);
-void init(int x0, int x1, int y0, int y1, double *array);
+double* init(int x0, int x1, int y0, int y1, double *array);
 double* allocateMem();
 
 int main(int argc, char** argv)
@@ -79,8 +79,8 @@ int main(int argc, char** argv)
 		Vtot = malloc(m*m*sizeof(double));
 	}
 	// Initializes V
-	init(x0, x1, y0, y1, V);
-	init(x0, x1, y0, y1, Vtemp);
+	V = init(x0, x1, y0, y1, V);
+	Vtemp = init(x0, x1, y0, y1, Vtemp);
 	//printf("Allocate goood__%d\n",rank);
 	// Iteration over N
 	for( n = 0; n < N; n++ )
@@ -100,6 +100,7 @@ int main(int argc, char** argv)
 				// Punto auxiliar para saber cual procesador comparte
 				int p0 = y0 - t*range0;
 				int p1 = y1 - t*range1;
+				printf("%d,%d\n", range0,range1);
 				if( rank == range0 ){
 					if( !(( i == p0 ) && ( j >= x0 ) && ( j <= x1 ))){
 						average = (V[tr(i-1,j)] + V[tr(i+1,j)] + V[tr(i,j-1)] + V[tr(i,j+1)])/4.0;
@@ -124,6 +125,7 @@ int main(int argc, char** argv)
 				}
 				else if( (rank == (range1-1)) && ((p1 == 0) || (p1 == 1)) ){
 					p1 = s-2+p1;
+					printf("%d\n",Vtemp[tr(p1,x0)]);
 					if( !(( i == p1 ) && ( j >= x0 ) && ( j <= x1 ))){
 						average = (V[tr(i-1,j)] + V[tr(i+1,j)] + V[tr(i,j-1)] + V[tr(i,j+1)])/4.0;
 						// Lo guarda en una variable diferente par evitar conflictos de actualización
@@ -134,9 +136,6 @@ int main(int argc, char** argv)
 					average = (V[tr(i-1,j)] + V[tr(i+1,j)] + V[tr(i,j-1)] + V[tr(i,j+1)])/4.0;
 					// Lo guarda en una variable diferente par evitar conflictos de actualización
 					Vtemp[tr(i,j)] = average;
-					if( Vtemp[tr(i,j)]!= 0 ){
-					        printf("LOL\n");
-					}
 				}				
 			}
 		}
@@ -222,7 +221,7 @@ double* allocateMem(){
 /*
  *  Inicializa los valores de la grid
  */
-void init(int x0, int x1, int y0, int y1, double *array)
+double* init(int x0, int x1, int y0, int y1, double *array)
 {	
 	int a,b;
 	for( a = 0; a < s; a ++ ){
@@ -275,6 +274,7 @@ void init(int x0, int x1, int y0, int y1, double *array)
 		array[tr(a,0)] = 0;
 		array[tr(a,m-1)] = 0;
 	}
+	return array;
 }
 
 
