@@ -13,7 +13,7 @@
  *  s   -> Tamaño vertical de la grid para el procesador
  *  
  */
-int L = 5, l = 2, d = 1, V0 = 100, m = 64, N, s;
+int L = 5, l = 2, d = 1, V0 = 100, m = 128, N, s;
 
 /*
  * MPI Variables
@@ -54,11 +54,11 @@ int main(int argc, char** argv)
 	double average;
 	if( (rank == 0) || (rank == (world_size-1)) ){
 		// El primer y ultimo procesador solo comparte una fila
-		s = m/world_size +1;
+	  	s = (m/world_size) +1;
 	}
 	else{
 		// Los demás procesadores comparten 2		
-		s = m/world_size +2;
+	        s = (m/world_size) +2;
 	}
 	
 	// Calcula m y N (parámetro de convergencia perhaps)
@@ -100,44 +100,41 @@ int main(int argc, char** argv)
 				// Punto auxiliar para saber cual procesador comparte
 				int p0 = y0 - t*range0;
 				int p1 = y1 - t*range1;
-				if ( (rank != range0) && (rank != range0-1) && (rank != range1) && (rank != range1-1) )
-				{	
+				if( rank == range0 ){
+					if( !(( i == p0 ) && ( j >= x0 ) && ( j <= x1 ))){
+						average = (V[tr(i-1,j)] + V[tr(i+1,j)] + V[tr(i,j-1)] + V[tr(i,j+1)])/4.0;
+						// Lo guarda en una variable diferente par evitar conflictos de actualización
+						Vtemp[tr(i,j)] = average;
+					}
+				}
+				else if( (rank == (range0-1)) && ((p0 == 0) || (p0 == 1)) ){
+					p0 = s-2+p0;
+					if( !(( i == p0 ) && ( j >= x0 ) && ( j <= x1 ))){
+						average = (V[tr(i-1,j)] + V[tr(i+1,j)] + V[tr(i,j-1)] + V[tr(i,j+1)])/4.0;
+						// Lo guarda en una variable diferente par evitar conflictos de actualización
+						Vtemp[tr(i,j)] = average;
+					}
+				}
+				else if( rank == range1 ){
+					if( !(( i == p1 ) && ( j >= x0 ) && ( j <= x1 ))){
+						average = (V[tr(i-1,j)] + V[tr(i+1,j)] + V[tr(i,j-1)] + V[tr(i,j+1)])/4.0;
+						// Lo guarda en una variable diferente par evitar conflictos de actualización
+						Vtemp[tr(i,j)] = average;
+					}
+				}
+				else if( (rank == (range1-1)) && ((p1 == 0) || (p1 == 1)) ){
+					p1 = s-2+p1;
+					if( !(( i == p1 ) && ( j >= x0 ) && ( j <= x1 ))){
+						average = (V[tr(i-1,j)] + V[tr(i+1,j)] + V[tr(i,j-1)] + V[tr(i,j+1)])/4.0;
+						// Lo guarda en una variable diferente par evitar conflictos de actualización
+						Vtemp[tr(i,j)] = average;
+					}
+				}
+				else{
 					average = (V[tr(i-1,j)] + V[tr(i+1,j)] + V[tr(i,j-1)] + V[tr(i,j+1)])/4.0;
 					// Lo guarda en una variable diferente par evitar conflictos de actualización
 					Vtemp[tr(i,j)] = average;
-				}
-				else{
-					if( rank == range0 ){
-						if( !(( i == p0 ) && ( j >= x0 ) && ( j <= x1 ))){
-							average = (V[tr(i-1,j)] + V[tr(i+1,j)] + V[tr(i,j-1)] + V[tr(i,j+1)])/4.0;
-							// Lo guarda en una variable diferente par evitar conflictos de actualización
-							Vtemp[tr(i,j)] = average;
-						}
-					}
-					else if( (rank == range0-1) && ((p0 == 0) || (p0 == 1)) ){
-						p0 = s-2+p0;
-						if( !(( i == p0 ) && ( j >= x0 ) && ( j <= x1 ))){
-							average = (V[tr(i-1,j)] + V[tr(i+1,j)] + V[tr(i,j-1)] + V[tr(i,j+1)])/4.0;
-							// Lo guarda en una variable diferente par evitar conflictos de actualización
-							Vtemp[tr(i,j)] = average;
-						}
-					}
-					else if( rank == range1 ){
-						if( !(( i == p1 ) && ( j >= x0 ) && ( j <= x1 ))){
-							average = (V[tr(i-1,j)] + V[tr(i+1,j)] + V[tr(i,j-1)] + V[tr(i,j+1)])/4.0;
-							// Lo guarda en una variable diferente par evitar conflictos de actualización
-							Vtemp[tr(i,j)] = average;
-						}
-					}
-					else if( (rank == range1-1) && ((p1 == 0) || (p1 == 1)) ){
-						p1 = s-2+p1;
-						if( !(( i == p1 ) && ( j >= x0 ) && ( j <= x1 ))){
-							average = (V[tr(i-1,j)] + V[tr(i+1,j)] + V[tr(i,j-1)] + V[tr(i,j+1)])/4.0;
-							// Lo guarda en una variable diferente par evitar conflictos de actualización
-							Vtemp[tr(i,j)] = average;
-						}
-					}				
-				}
+				}				
 			}
 		}
 	        // Actualiza la matriz de posiciones
@@ -154,7 +151,7 @@ int main(int argc, char** argv)
 			MPI_Isend(&V[tr(s-2,0)], m, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD, &send_req);
 			MPI_Irecv(&V[tr(s-1,0)], m, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD, &rec_req);
 		}
-		else if( rank == world_size-1 ){
+		else if( rank == (world_size-1) ){
 			// Intercambia con el anterior
 			MPI_Isend(&V[tr(1,0)], m, MPI_DOUBLE, world_size-2, 0, MPI_COMM_WORLD, &send_req);
 			MPI_Irecv(&V[tr(0,0)], m, MPI_DOUBLE, world_size-2, 0, MPI_COMM_WORLD, &rec_req);
@@ -223,7 +220,12 @@ double* allocateMem(){
  */
 void init(int x0, int x1, int y0, int y1, double *array)
 {	
-	int a;
+	int a,b;
+	for( a = 0; a < s; a ++ ){
+		for( b = 0; b < m; b++ ){
+		  array[tr(a,b)] = 0;
+		}
+	}
 	// Barras
 	for( a = x0; a <= x1; a++ )
 	{	
