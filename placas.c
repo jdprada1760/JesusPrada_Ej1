@@ -134,15 +134,19 @@ int main(int argc, char** argv)
 					average = (V[tr(i-1,j)] + V[tr(i+1,j)] + V[tr(i,j-1)] + V[tr(i,j+1)])/4.0;
 					// Lo guarda en una variable diferente par evitar conflictos de actualización
 					Vtemp[tr(i,j)] = average;
+					if( Vtemp[tr(i,j)]!= 0 ){
+					        printf("LOL\n");
+					}
 				}				
 			}
 		}
 	        // Actualiza la matriz de posiciones
-		for( i=0; i < s; i++ )
+		int a,b;
+		for( a=0; a < s; a++ )
 		{
-			for( j=0; j < m; j++ )
+			for( b=0; b < m; b++ )
 			{
-				V[tr(i,j)] = Vtemp[tr(i,j)];
+				V[tr(a,b)] = Vtemp[tr(a,b)];
 			}
 		}
 		// Comunica entre procesadores la actualización
@@ -197,7 +201,7 @@ int main(int argc, char** argv)
 		for( i=0; i < m*m; i++ )
 		{
 			fprintf(outp,"%f\n", Vtot[i]);
-			printf("%f\n",Vtot[i]);
+			//printf("%f\n",Vtot[i]);
 		}
 	}
 	
