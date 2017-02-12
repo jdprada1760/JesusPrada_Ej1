@@ -13,7 +13,7 @@
  *  s   -> Tamaño vertical de la grid para el procesador
  *  
  */
-int L = 5, l = 2, d = 1, V0 = 100, m = 128, N, s;
+int L = 5, l = 2, d = 1, V0 = 100, m = 64, N, s;
 
 /*
  * MPI Variables
@@ -27,7 +27,7 @@ double* allocateMem();
 
 int main(int argc, char** argv)
 {
-  FILE* outp ;
+	FILE* outp ;
   	if( rank == 0 ){
 		outp = fopen("out.data","w");
 	}	
@@ -52,7 +52,7 @@ int main(int argc, char** argv)
 	 */
 	int x0, x1, y0, y1, i=1, j=1, n=0;
 	double average;
-	if( rank == 0 || rank == world_size-1 ){
+	if( (rank == 0) || (rank == (world_size-1)) ){
 		// El primer y ultimo procesador solo comparte una fila
 		s = m/world_size +1;
 	}
@@ -200,6 +200,7 @@ int main(int argc, char** argv)
 		for( i=0; i < m*m; i++ )
 		{
 			fprintf(outp,"%f\n", Vtot[i]);
+			printf("%f\n",Vtot[i]);
 		}
 	}
 	
@@ -236,20 +237,20 @@ void init(int x0, int x1, int y0, int y1, double *array)
 		int p1 = y1 - t*range1;
 		// Actualiza dependiendo del rank
 		if(rank == range0){
-			array[tr(p0,a)] = V0/2;
+			array[tr(p0,a)] = V0/2.0;
 		}
 		if(rank == range1){
-			array[tr(p1,a)] = V0/2;
+			array[tr(p1,a)] = V0/2.0;
 		}
 		// Si es 0 o 1 se comparte con el anterior procesador
 		if( (p0 == 0) || (p0 == 1) ){
-			if( rank == range0 - 1 ){
-				array[tr(s-2+p0,a)] = V0/2;	
+			if( rank == (range0 - 1) ){
+				array[tr(s-2+p0,a)] = V0/2.0;	
 			}
 		}
 		if( (p1 == 0) || (p1 == 1) ){
-			if( rank == range1 - 1 ){
-				array[tr(s-2+p1,a)] = V0/2;	
+			if( rank == (range1 - 1) ){
+				array[tr(s-2+p1,a)] = V0/2.0;	
 			}
 		}	
 		
